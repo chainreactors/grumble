@@ -25,6 +25,7 @@
 package grumble
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -43,6 +44,7 @@ type App struct {
 	rl            *readline.Instance
 	config        *Config
 	commands      Commands
+	groups        Groups
 	isShell       bool
 	currentPrompt string
 
@@ -76,6 +78,7 @@ func New(c *Config) (a *App) {
 		config:           c,
 		currentPrompt:    c.prompt(),
 		flagMap:          make(FlagMap),
+		groups:           make(Groups),
 		printHelp:        defaultPrintHelp,
 		printCommandHelp: defaultPrintCommandHelp,
 		interruptHandler: defaultInterruptHandler,
@@ -124,6 +127,10 @@ func (a *App) Config() *Config {
 // Access is not thread-safe. Only access during command execution.
 func (a *App) Commands() *Commands {
 	return &a.commands
+}
+
+func (a *App) Groups() Groups {
+	return a.groups
 }
 
 // PrintError prints the given error.
@@ -234,11 +241,50 @@ func (a *App) addCommand(cmd *Command, addHelpFlag bool) {
 	a.commands.Add(cmd)
 }
 
+func (a *App) AddGroup(group *Group) {
+	if _, ok := a.groups[group.Name]; ok {
+		panic(fmt.Errorf("group '%s' already exists", group.Name))
+	}
+	a.groups[group.Name] = group
+}
+
+func (a *App) Parse(args []string, parentFlagMap FlagMap, skipFlagMaps bool) (cmds []*Command, flagsMap FlagMap, rest []string, err error) {
+	cmds, flagsMap, args, err = a.commands.parse(args, parentFlagMap, skipFlagMaps)
+	if err != nil {
+		return
+	} else if len(cmds) == 0 {
+		for _, g := range a.groups {
+			if !g.enabled {
+				continue
+			}
+			cmds, flagsMap, args, err = g.commands.parse(args, parentFlagMap, skipFlagMaps)
+			if err != nil {
+				return
+			} else if len(cmds) > 0 {
+				return
+			}
+		}
+		return nil, nil, nil, errors.New("not found any command")
+	} else {
+		return
+	}
+}
+
+func (a *App) FindCommand(args []string) (cmd *Command, rest []string, err error) {
+	cmds, _, rest, err := a.Parse(args, a.flagMap, false)
+	if err != nil {
+		return
+	} else if len(cmds) == 0 {
+		return nil, nil, errors.New("not found any command")
+	}
+	return cmds[len(cmds)-1], rest, nil
+}
+
 // RunCommand runs a single command.
 func (a *App) RunCommand(args []string) error {
 	// Parse the arguments string and obtain the command path to the root,
 	// and the command flags.
-	cmds, fg, args, err := a.commands.parse(args, a.flagMap, false)
+	cmds, fg, args, err := a.Parse(args, a.flagMap, false)
 	if err != nil {
 		return err
 	} else if len(cmds) == 0 {
@@ -330,7 +376,7 @@ func (a *App) RunWithReadline(rl *readline.Instance) (err error) {
 				a.printHelp(a, a.isShell)
 				return nil
 			}
-			cmd, _, err := a.commands.FindCommand(args)
+			cmd, _, err := a.FindCommand(args)
 			if err != nil {
 				return err
 			} else if cmd == nil {
@@ -413,7 +459,7 @@ func (a *App) setReadlineDefaults(config *readline.Config) {
 	config.DisableAutoSaveHistory = true
 	config.HistoryFile = a.config.HistoryFile
 	config.HistoryLimit = a.config.HistoryLimit
-	config.AutoComplete = newCompleter(&a.commands)
+	config.AutoComplete = newCompleter(&a.commands, a.groups)
 	config.VimMode = a.config.VimMode
 }
 

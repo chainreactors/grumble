@@ -15,6 +15,5 @@ require (
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	golang.org/x/crypto v0.6.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
 	gopkg.in/AlecAivazis/survey.v1 v1.8.8
 )

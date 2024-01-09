@@ -32,11 +32,13 @@ import (
 
 type completer struct {
 	commands *Commands
+	groups   Groups
 }
 
-func newCompleter(commands *Commands) *completer {
+func newCompleter(commands *Commands, groups Groups) *completer {
 	return &completer{
 		commands: commands,
+		groups:   groups,
 	}
 }
 
@@ -71,11 +73,19 @@ func (c *completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 
 	// Find the last commands list.
 	if len(words) == 0 {
-		cmds = c.commands
+		cmds = &Commands{
+			list: append(c.commands.list, c.groups.Commands().list...),
+		}
 	} else {
 		cmd, rest, err := c.commands.FindCommand(words)
-		if err != nil || cmd == nil {
+		if err != nil {
 			return
+		}
+		if cmd == nil {
+			cmd, rest, err = c.groups.FindCommand(words)
+			if err != nil || cmd == nil {
+				return
+			}
 		}
 
 		// Call the custom completer if present.

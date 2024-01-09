@@ -104,6 +104,10 @@ func (c *Command) Parent() *Command {
 	return c.parent
 }
 
+func (c *Command) Commands() Commands {
+	return c.commands
+}
+
 // AddCommand adds a new command.
 // Panics on error.
 func (c *Command) AddCommand(cmd *Command) {

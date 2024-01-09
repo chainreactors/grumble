@@ -79,6 +79,13 @@ func defaultPrintHelp(a *App, shell bool) {
 		cc.Add(c)
 	}
 
+	for name, g := range a.groups {
+		if !g.enabled {
+			continue
+		}
+		groups[name] = g.Commands()
+	}
+
 	// Sort the map by the keys.
 	var keys []string
 	for k := range groups {
