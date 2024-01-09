@@ -25,8 +25,8 @@
 package main
 
 import (
-	"github.com/desertbit/grumble"
-	"github.com/desertbit/grumble/sample/simple/cmd"
+	"github.com/chainreactors/grumble"
+	"github.com/chainreactors/grumble/sample/simple/cmd"
 )
 
 func main() {

@@ -29,7 +29,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/desertbit/grumble"
+	"github.com/chainreactors/grumble"
 )
 
 var App = grumble.New(&grumble.Config{
