@@ -257,7 +257,7 @@ func (a *App) Parse(args []string, parentFlagMap FlagMap, skipFlagMaps bool) (cm
 			if !g.enabled {
 				continue
 			}
-			cmds, flagsMap, args, err = g.commands.parse(args, parentFlagMap, skipFlagMaps)
+			cmds, flagsMap, rest, err = g.commands.parse(args, parentFlagMap, skipFlagMaps)
 			if err != nil {
 				return
 			} else if len(cmds) > 0 {
@@ -269,6 +269,14 @@ func (a *App) Parse(args []string, parentFlagMap FlagMap, skipFlagMaps bool) (cm
 		return
 	}
 }
+
+//func (a *App) ArgsParse(args []string, res ArgMap) ([]string, error) {
+//	var err error
+//	args, err = a.args.parse(args, cmdArgMap)
+//	if err != nil {
+//		return err
+//	}
+//}
 
 func (a *App) FindCommand(args []string) (cmd *Command, rest []string, err error) {
 	cmds, _, rest, err := a.Parse(args, a.flagMap, false)

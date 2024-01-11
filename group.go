@@ -58,7 +58,7 @@ func (g Groups) Parse(args []string, parentFlagMap FlagMap, skipFlagMaps bool) (
 		if !i.enabled {
 			continue
 		}
-		cmds, flagsMap, args, err = i.commands.parse(args, parentFlagMap, skipFlagMaps)
+		cmds, flagsMap, rest, err = i.commands.parse(args, parentFlagMap, skipFlagMaps)
 		if err != nil {
 			return
 		} else if len(cmds) > 0 {
