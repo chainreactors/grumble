@@ -486,3 +486,78 @@ func trimQuotes(s string) string {
 	}
 	return s
 }
+
+func (f *Flags) MapL(long string, defaultValue []string, help string) {
+	f.Map("", long, defaultValue, help)
+}
+
+func (f *Flags) Map(short, long string, defaultValue []string, help string) {
+	f.register(short, long, help, "map", true, defaultValue,
+		func(res FlagMap) {
+			res[long] = &FlagMapItem{
+				Value:     defaultValue,
+				IsDefault: true,
+			}
+		},
+		func(flag, equalVal string, args []string, res FlagMap) ([]string, bool, error) {
+			if !f.match(flag, short, long) {
+				return args, false, nil
+			}
+
+			if len(equalVal) > 0 {
+				values := strings.Split(equalVal, ",")
+				res[long] = &FlagMapItem{
+					Value:     values,
+					IsDefault: false,
+				}
+				return args, true, nil
+			}
+
+			if len(args) == 0 {
+				return args, false, fmt.Errorf("missing map values for flag: %s", flag)
+			}
+
+			values := strings.Split(args[0], ",")
+			res[long] = &FlagMapItem{
+				Value:     values,
+				IsDefault: false,
+			}
+			args = args[1:]
+			return args, true, nil
+		})
+}
+
+func (f *Flags) StringSliceL(long string, defaultValue []string, help string) {
+	f.StringSlice("", long, defaultValue, help)
+}
+
+func (f *Flags) StringSlice(short, long string, defaultValue []string, help string) {
+	f.register(short, long, help, "string slice", true, defaultValue,
+		func(res FlagMap) {
+			res[long] = &FlagMapItem{
+				Value:     defaultValue,
+				IsDefault: true,
+			}
+		},
+		func(flag, equalVal string, args []string, res FlagMap) ([]string, bool, error) {
+			if !f.match(flag, short, long) {
+				return args, false, nil
+			}
+			if _, ok := res[long]; !ok {
+				res[long] = &FlagMapItem{
+					Value:     []string{},
+					IsDefault: false,
+				}
+			}
+			if len(equalVal) > 0 {
+				res[long].Value = append(res[long].Value.([]string), equalVal)
+				return args, true, nil
+			}
+			if len(args) == 0 {
+				return args, false, fmt.Errorf("missing string value for flag: %s", flag)
+			}
+			res[long].Value = append(res[long].Value.([]string), args[0])
+			args = args[1:]
+			return args, true, nil
+		})
+}
