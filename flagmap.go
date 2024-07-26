@@ -163,11 +163,11 @@ func (f FlagMap) Duration(long string) time.Duration {
 	return v
 }
 
-// List returns the given flag value as a slice of strings.
+// Map returns the given flag value as a slice of strings.
 // Panics if not present. Flags must be registered.
-// List returns the given flag value as a slice of key-value pairs.
+// Map returns the given flag value as a slice of key-value pairs.
 // Panics if not present. Flags must be registered.
-func (f FlagMap) List(long string) map[string]string {
+func (f FlagMap) Map(long string) map[string]string {
 	i := f[long]
 	if i == nil {
 		panic(fmt.Errorf("missing flag value: flag '%s' not registered", long))
@@ -179,7 +179,7 @@ func (f FlagMap) List(long string) map[string]string {
 
 	result := make(map[string]string)
 	for _, item := range val {
-		parts := strings.SplitN(item, "=", 2)
+		parts := strings.SplitN(item, ":", 2)
 		if len(parts) == 2 {
 			key := strings.TrimSpace(parts[0])
 			value := strings.TrimSpace(parts[1])
@@ -187,4 +187,18 @@ func (f FlagMap) List(long string) map[string]string {
 		}
 	}
 	return result
+}
+
+// StringSlice returns the given flag value as a slice of strings.
+// Panics if not present. Flags must be registered.
+func (f FlagMap) StringSlice(long string) []string {
+	i := f[long]
+	if i == nil {
+		panic(fmt.Errorf("missing flag value: flag '%s' not registered", long))
+	}
+	v, ok := i.Value.([]string)
+	if !ok {
+		panic(fmt.Errorf("failed to assert flag '%s' to []string", long))
+	}
+	return v
 }
