@@ -26,6 +26,7 @@ package grumble
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -160,4 +161,30 @@ func (f FlagMap) Duration(long string) time.Duration {
 		panic(fmt.Errorf("failed to assert flag '%s' to duration", long))
 	}
 	return v
+}
+
+// List returns the given flag value as a slice of strings.
+// Panics if not present. Flags must be registered.
+// List returns the given flag value as a slice of key-value pairs.
+// Panics if not present. Flags must be registered.
+func (f FlagMap) List(long string) map[string]string {
+	i := f[long]
+	if i == nil {
+		panic(fmt.Errorf("missing flag value: flag '%s' not registered", long))
+	}
+	val, ok := i.Value.([]string)
+	if !ok {
+		panic(fmt.Errorf("failed to assert flag '%s' to []string", long))
+	}
+
+	result := make(map[string]string)
+	for _, item := range val {
+		parts := strings.SplitN(item, "=", 2)
+		if len(parts) == 2 {
+			key := strings.TrimSpace(parts[0])
+			value := strings.TrimSpace(parts[1])
+			result[key] = value
+		}
+	}
+	return result
 }

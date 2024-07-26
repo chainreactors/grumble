@@ -486,3 +486,43 @@ func trimQuotes(s string) string {
 	}
 	return s
 }
+
+func (f *Flags) ListL(long string, defaultValue []string, help string) {
+	f.List("", long, defaultValue, help)
+}
+
+func (f *Flags) List(short, long string, defaultValue []string, help string) {
+	f.register(short, long, help, "list", true, defaultValue,
+		func(res FlagMap) {
+			res[long] = &FlagMapItem{
+				Value:     defaultValue,
+				IsDefault: true,
+			}
+		},
+		func(flag, equalVal string, args []string, res FlagMap) ([]string, bool, error) {
+			if !f.match(flag, short, long) {
+				return args, false, nil
+			}
+
+			if len(equalVal) > 0 {
+				values := strings.Split(equalVal, ",")
+				res[long] = &FlagMapItem{
+					Value:     values,
+					IsDefault: false,
+				}
+				return args, true, nil
+			}
+
+			if len(args) == 0 {
+				return args, false, fmt.Errorf("missing list values for flag: %s", flag)
+			}
+
+			values := strings.Split(args[0], ",")
+			res[long] = &FlagMapItem{
+				Value:     values,
+				IsDefault: false,
+			}
+			args = args[1:]
+			return args, true, nil
+		})
+}
